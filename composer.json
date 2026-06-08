@@ -1,0 +1,42 @@
+{
+  "name": "yantico/laravel-dev",
+  "description": "Fast Laravel Develop toolkits (Laravel 13 compatible)",
+  "type": "library",
+  "authors": [
+    {
+      "name": "yantico",
+      "email": "595061348@qq.com"
+    }
+  ],
+  "license": "MIT",
+  "require": {
+    "php": "^8.3",
+    "laravel/framework": "^13.0",
+    "ext-json": "*",
+    "ext-pdo": "*",
+    "ext-bcmath": "*",
+    "mews/captcha": "^3.4.8",
+    "mews/purifier": "^3.4.4",
+    "orangehill/iseed": "^3.8.0",
+    "kalnoy/nestedset": "^7.0",
+    "league/flysystem-aws-s3-v3": "^3.28",
+    "rap2hpoutre/fast-excel": "^5.7.0",
+    "spatie/laravel-permission": "^7.0",
+    "spatie/eloquent-sortable": "^5.0",
+    "spatie/laravel-tags": "^4.11.0",
+    "vinkla/hashids": "^14.0",
+    "jawira/plantuml-encoding": "^1.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "LaravelDev\\": "src/"
+    }
+  },
+  "extra": {
+    "laravel": {
+      "providers": [
+        "LaravelDev\\ServiceProvider"
+      ]
+    }
+  }
+}

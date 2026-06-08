@@ -1,0 +1,23 @@
+<?php
+
+namespace {{ namespace }};
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+{{ importClasses }}
+
+/**
+{{ properties }}
+ */
+class {{ className }} extends Base
+{
+    use HasFactory;
+    {{ traits }}
+
+    protected $table = '{{ tableName }}';
+    protected string $comment = '{{ comment }}';
+    protected $fillable = [{{ fillable }}];
+    {{ hidden }}
+
+    {{ casts }}
+    {{ relations }}
+}
