@@ -113,7 +113,7 @@ class ExceptionRender
         $line = array_column($arr, 'line');
         $trace = [];
         for ($i = 0; $i < count($file); $i++) {
-            if (!strpos($file[$i], '/vendor/'))
+            if ($file[$i] !== null && strpos($file[$i], '/vendor/') === false)
                 $trace[] = [
                     $i => "$file[$i]($line[$i])"
                 ];

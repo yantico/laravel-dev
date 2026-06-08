@@ -5,14 +5,10 @@ namespace LaravelDev\App\Helpers;
 class IpHelper
 {
     /**
-     * @return mixed|string|null
+     * @return string|null
      */
-    public static function GetIp(): mixed
+    public static function GetIp(): ?string
     {
-        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'] ?? $_SERVER['REMOTE_ADDR'] ?? null;
-        if (filter_var($ip, FILTER_VALIDATE_IP) === false) {
-            $ip = request()->getClientIp();
-        }
-        return $ip;
+        return request()->ip();
     }
 }

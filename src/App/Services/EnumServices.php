@@ -52,7 +52,8 @@ class EnumServices
             $namespace = '\\App\\Enums\\' . $className;
 
             $enumRef = new ReflectionClass($namespace);
-            $classDoc = DocBlockReader::parse($enumRef->getDocComment());
+            $classDocComment = $enumRef->getDocComment();
+            $classDoc = $classDocComment !== false ? DocBlockReader::parse($classDocComment) : [];
 
             $enumModel = new EnumModel();
             $enumModel->className = last(explode("\\", $namespace));
@@ -60,7 +61,8 @@ class EnumServices
             $enumModel->field = $classDoc['field'] ?? '';
 
             foreach ($enumRef->getConstants() as $constRef) {
-                $constDoc = DocBlockReader::parse($enumRef->getReflectionConstant($constRef->name)->getDocComment());
+                $docComment = $enumRef->getReflectionConstant($constRef->name)->getDocComment();
+                $constDoc = $docComment !== false ? DocBlockReader::parse($docComment) : [];
                 $constModel = new EnumConstantModel();
                 $constModel->label = $constDoc['label'] ?? $constRef->name;
                 $constModel->value = $constDoc['value'] ?? $constRef->value;

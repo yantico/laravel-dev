@@ -13,7 +13,7 @@ trait ControllerTrait
     protected function crypto(array &$params, string $key = 'password'): void
     {
         if (array_key_exists($key, $params)) {
-            if ($params[$key] == '' || $params[$key] == null) {
+            if ($params[$key] === '' || $params[$key] === null) {
                 unset($params[$key]);
             } else {
                 $params[$key] = bcrypt($params[$key]);

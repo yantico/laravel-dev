@@ -22,7 +22,7 @@ use Closure;
  * @method static self ifIsNotNull(array $params, string $key, ?string $field = null)
  * @method static lockForUpdate()
  * @method static create(array $params)
- * @method static where(string $field, string $value, ?string $value)
+ * @method static where(string $field, string $operator, mixed $value)
  * @method static findOrFail(int $id)
  * @method static selectRaw(string $raw)
  * @method static whereIn(string $field, array $array)

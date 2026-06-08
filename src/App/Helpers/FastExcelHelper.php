@@ -26,15 +26,14 @@ class FastExcelHelper
     public static function Export(QueryBuilder|EloquentBuilder $query, string $filename, Closure $callback = null, $ext = 'csv')
     {
         try {
-            function generator($q): Generator
-            {
-                foreach ($q->cursor() as $item) {
+            $generator = function () use ($query): Generator {
+                foreach ($query->cursor() as $item) {
                     yield $item;
                 }
-            }
+            };
 
             $id = uniqid();
-            return (new FastExcel(generator($query)))->download("{$filename}_$id.$ext", $callback);
+            return (new FastExcel($generator()))->download("{$filename}_$id.$ext", $callback);
         } catch (Exception $exception) {
             ee('导出失败：' . $exception->getMessage());
         }
@@ -53,11 +52,11 @@ class FastExcelHelper
         try {
             DB::beginTransaction();
 
-            (new FastExcel)->import($file->getRealPath(), function ($row) use ($closure) {
+            (new FastExcel)->import($file->getRealPath(), function ($row) use ($closure, &$i) {
                 $closure($row);
+                $i++;
             });
 
-            $i++;
             DB::commit();
         } catch (Exception $e) {
             DB::rollBack();

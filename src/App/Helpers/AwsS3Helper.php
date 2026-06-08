@@ -35,13 +35,13 @@ class AwsS3Helper
      * 上传文件
      * @param string $fileName
      * @param string $fileContent
-     * @param string|null $acl
+     * @param string|null $visibility 可见性：'public' 或 'private'（Flysystem 标准，非 AWS ACL）
      * @return void
      * @throws Err
      */
-    public static function PutObject(string $fileName, string $fileContent, ?string $acl = 'public-read'): void
+    public static function PutObject(string $fileName, string $fileContent, ?string $visibility = 'public'): void
     {
-        $result = Storage::disk('s3')->put($fileName, $fileContent, $acl);
+        $result = Storage::disk('s3')->put($fileName, $fileContent, $visibility);
         if (!$result)
             ee('文件上传失败');
     }
@@ -100,12 +100,17 @@ class AwsS3Helper
      */
     public static function PreUpload(string $uploadDir, string $fileName, ?string $acl = 'public-read'): array
     {
-        $fileExt = last(explode('.', $fileName));
+        // 防止路径穿越
+        if (str_contains($uploadDir, '..') || str_contains($fileName, '..')) {
+            ee('上传路径不合法');
+        }
+
+        $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
         if (!in_array($fileExt, self::ALLOW_FILE_EXTENSIONS))
             ee('文件类型不允许上传');
 
         $id = Ulid::generate();
-        return AwsS3Helper::temporaryUploadUrl("/$uploadDir/$id.$fileExt", acl: $acl);
+        return AwsS3Helper::TemporaryUploadUrl("/$uploadDir/$id.$fileExt", acl: $acl);
     }
 
     /**
@@ -123,7 +128,7 @@ class AwsS3Helper
         foreach ($keys as $key) {
             if (isset($params[$key])) {
                 $params[$key] = preg_replace_callback('/(<img[^>]+src=")([^">]+)(")/i', function ($matches) use ($uploadDir, $width, $quality) {
-                    if ($matches[2] && strpos($matches[2], 'ata:image')) {
+                    if ($matches[2] && strpos($matches[2], 'data:image') !== false) {
                         // upload base64 image
                         $url = self::uploadBase64Image($matches[2], $uploadDir);
                         logger()->channel('stderr')->debug('Uploaded Base64 Image: ', [
@@ -268,7 +273,17 @@ class AwsS3Helper
     private static function uploadBase64Image(string $content, string $uploadDir): string
     {
         $image = explode(',', $content);
-        $content = base64_decode($image[1]);
+        $decoded = base64_decode($image[1] ?? '', true);
+        if ($decoded === false) {
+            ee('Base64 解码失败');
+        }
+
+        // 验证是否为合法图片
+        $finfo = new \finfo(FILEINFO_MIME_TYPE);
+        $detectedMime = $finfo->buffer($decoded);
+        if (!str_starts_with($detectedMime, 'image/')) {
+            ee('上传内容不是有效的图片');
+        }
 
         $extension = substr($image[0], strpos($image[0], "/") + 1);
         $extension = substr($extension, 0, strpos($extension, ";"));
@@ -276,7 +291,7 @@ class AwsS3Helper
         $id = Ulid::generate();
         $object = "/$uploadDir/$id.$extension";
 
-        self::PutObject($object, $content);
+        self::PutObject($object, $decoded);
         return Storage::disk('s3')->url($object);
     }
 }

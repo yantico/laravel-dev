@@ -30,7 +30,7 @@ class LaravelPermissionHelper
             return $value['_lft'];
         }));
         // 生成树形结构
-        return $this->toTree();
+        return $this->buildPermissionTree();
     }
 
     /**
@@ -44,10 +44,15 @@ class LaravelPermissionHelper
 
     /**
      * @param $item
+     * @param int $depth 防止无限递归
      * @return void
      */
-    private function getParent($item): void
+    private function getParent($item, int $depth = 0): void
     {
+        // 防止无限递归
+        if ($depth > 20)
+            return;
+
         if (!in_array($item->id, $this->ids)) {
             $this->ids[] = $item->id;
             $this->list[] = [
@@ -56,23 +61,26 @@ class LaravelPermissionHelper
                 'title' => $item['title'],
                 'dbType' => $item['dbType'],
                 'url' => $item['url'],
-                //'permission' => $item['permission'],
                 'icon' => $item['icon'],
                 '_lft' => $item['_lft'],
                 'parent_id' => $item['parent_id'],
             ];
         }
         if ($item->parent_id != null) {
-            $parent = SysPermissions::findOrFail($item->parent_id);
-            $this->getParent($parent);
+            $parent = SysPermissions::find($item->parent_id);
+            if ($parent)
+                $this->getParent($parent, $depth + 1);
         }
     }
 
     /**
      * @return mixed
      */
-    private function toTree(): mixed
+    private function buildPermissionTree(): ?array
     {
+        if (empty($this->list))
+            return null;
+
         $this->listCount = count($this->list) - 1;
         $this->list[0]['children'] = $this->getChildren(1, $this->list[0]['id']);
         return $this->list[0];

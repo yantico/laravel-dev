@@ -26,7 +26,7 @@ class BuilderMacros
             }));
 
         $_ifWhereNumberRange = function (array $params, string $key, ?string $field = null) {
-            if (!isset($params[$key]))
+            if (!isset($params[$key]) || !is_array($params[$key]))
                 return $this;
 
             $dataRange = $params[$key];
@@ -36,38 +36,39 @@ class BuilderMacros
             $start = $dataRange[0] ?? null;
             $end = $dataRange[1] ?? null;
 
-            if ($start && !$end)
+            if ($start !== null && $end === null)
                 return $this->where($field ?? $key, '>=', $start);
-            if (!$start && $end)
+            if ($start === null && $end !== null)
                 return $this->where($field ?? $key, '<=', $end);
-            else
+            if ($start !== null && $end !== null)
                 return $this->whereBetween($field ?? $key, [$start, $end]);
+
+            return $this;
         };
 
         $_ifWhereDateRange = function (array $params, string $key, ?string $field = null, ?string $type = 'datetime') {
-            if (!isset($params[$key]))
-                return $this;
-
-            if (count($params[$key]) == 0)
+            if (!isset($params[$key]) || !is_array($params[$key]) || count($params[$key]) == 0)
                 return $this;
 
             $range = $params[$key];
             if (count($range) != 2)
                 ee("{$key}参数必须是两个值");
 
-            $start = $range[0] == '' || $range[0] == null ? null : Carbon::parse($range[0]);
-            $end = $range[1] == '' || $range[1] == null ? null : Carbon::parse($range[1]);
+            $start = ($range[0] === '' || $range[0] === null) ? null : Carbon::parse($range[0]);
+            $end = ($range[1] === '' || $range[1] === null) ? null : Carbon::parse($range[1]);
 
-            $start = $start ? ($type == 'date' ? $start->toDateString() : $start->startOfDay()->toDateTimeString()) : null;
-            $end = $end ? ($type == 'date' ? $end->toDateString() : $end->endOfDay()->toDateTimeString()) : null;
+            $start = $start !== null ? ($type === 'date' ? $start->toDateString() : $start->startOfDay()->toDateTimeString()) : null;
+            $end = $end !== null ? ($type === 'date' ? $end->toDateString() : $end->endOfDay()->toDateTimeString()) : null;
 
             $field = $field ?? $key;
-            if ($start && !$end)
+            if ($start !== null && $end === null)
                 return $this->where($field, '>=', $start);
-            if (!$start && $end)
+            if ($start === null && $end !== null)
                 return $this->where($field, '<=', $end);
-            else
+            if ($start !== null && $end !== null)
                 return $this->whereBetween($field, [$start, $end]);
+
+            return $this;
         };
 
         $_ifHasWhereLike = function (array $params, string $key, string $relation, ?string $field = null) {
@@ -84,7 +85,11 @@ class BuilderMacros
                 $orderBy = $params[$key];
                 if (count($orderBy) == 2) {
                     $field = $orderBy[0];
-                    $sort = $orderBy[1] == 'descend' ? 'desc' : 'asc';
+                    // 校验字段名只允许字母、数字、下划线和点（防止 SQL 注入）
+                    if (!preg_match('/^[a-zA-Z_][a-zA-Z0-9_.]*$/', $field)) {
+                        return $this->orderByDesc($defaultField);
+                    }
+                    $sort = $orderBy[1] === 'descend' ? 'desc' : 'asc';
                     return $this->orderBy($field, $sort);
                 }
             }
@@ -99,9 +104,9 @@ class BuilderMacros
             return $this->paginate($perPage);
         };
 
-        $_forSelect = fn(?string $key1 = 'id', ?string $key2 = 'name', ?string $orderByDesc = 'id') => $this->selectRaw("$key1, $key2")->orderByDesc($orderByDesc)->get();
+        $_forSelect = fn(?string $key1 = 'id', ?string $key2 = 'name', ?string $orderByDesc = 'id') => $this->select([$key1, $key2])->orderByDesc($orderByDesc)->get();
 
-        $_unique = function (array $params, array $keys, string $label = null, string $field = 'id', ?int $keyIndex = 0) {
+        $_unique = function (array $params, array $keys, ?string $label = null, string $field = 'id', ?int $keyIndex = 0) {
             $model = $this->where(Arr::only($params, $keys))->first();
             if ($model && $label != null) {
                 if (!isset($params[$field]) || $model->$field != $params[$field])

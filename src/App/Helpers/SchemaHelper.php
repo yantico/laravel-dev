@@ -56,6 +56,9 @@ class SchemaHelper
      */
     public static function Comment(string $comment, ?string $referenceTable, ?string $referenceKey = 'id'): string
     {
+        if ($referenceTable === null) {
+            return $comment;
+        }
         return "$comment,[ref:$referenceTable,$referenceKey]";
     }
 

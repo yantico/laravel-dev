@@ -17,8 +17,12 @@ class CheckPermissionMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // 去掉 api/
-        $uri = substr($request->route()->uri, 4);
+        // 动态获取并去掉路由前缀（如 "api/"）
+        $uri = $request->route()->uri;
+        $prefix = $request->route()->getPrefix();
+        if ($prefix && str_starts_with($uri, $prefix . '/')) {
+            $uri = substr($uri, strlen($prefix) + 1);
+        }
 
         // 获取 guardName
         $guardName = str()->of($uri)->before('/')->camel()->ucfirst()->toString();
