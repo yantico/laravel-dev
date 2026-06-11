@@ -2,6 +2,7 @@
 
 namespace LaravelDev\App\Services;
 
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -81,10 +82,14 @@ class DBServices
      */
     public static function GetFromCache(): DBModel
     {
-        return Cache::store('file')->rememberForever('_dev_db', function () {
-            logger()->channel('stderr')->debug('DBServices::GetFromCache... cache missed');
+        if (App::environment('local')) {
             return self::ReflectDBToModel();
-        });
+        } else {
+            return Cache::store('file')->rememberForever('_dev_db', function () {
+                logger()->channel('stderr')->debug('DBServices::GetFromCache... cache missed');
+                return self::ReflectDBToModel();
+            });
+        }
     }
 
     /**

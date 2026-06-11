@@ -175,7 +175,7 @@ class RouterServices
     {
         foreach (self::GetFromCache() as $api) {
 //            $arr = [...$api->moduleNames, $api->name];
-            Route::prefix($api->routerPrefix)->middleware($api->moduleNames[0] ?? null)->group(function ($router) use ($api) {
+            Route::prefix($api->routerPrefix)->group(function ($router) use ($api) {
                 foreach ($api->actions as $action) {
                     if ($action->skipInRouter)
                         continue;

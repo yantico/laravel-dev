@@ -57,7 +57,7 @@ class ExceptionRender
         if ($isDebug) {
             $resp['debug'] = $debugInfo;
         }
-        return response()->json($resp);
+        return response()->json($resp, $httpStatus);
     }
 
     /**

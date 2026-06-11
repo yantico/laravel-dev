@@ -145,6 +145,16 @@ class BuilderMacros
         QueryBuilder::macro('ifIsNull', $_ifIsNull);
         QueryBuilder::macro('ifIsNotNull', $_ifIsNotNull);
 
+        EloquentBuilder::macro('ifWhere', $_ifWhere);
+        EloquentBuilder::macro('ifWhereLike', $_ifWhereLike);
+        EloquentBuilder::macro('ifWhereLikeKeyword', $_ifWhereLikeKeyword);
+        EloquentBuilder::macro('ifWhereNumberRange', $_ifWhereNumberRange);
+        EloquentBuilder::macro('ifWhereDateRange', $_ifWhereDateRange);
+        EloquentBuilder::macro('order', $_order);
+        EloquentBuilder::macro('unique', $_unique);
+        EloquentBuilder::macro('ifIsNull', $_ifIsNull);
+        EloquentBuilder::macro('ifIsNotNull', $_ifIsNotNull);
+
         EloquentBuilder::macro('forSelect', $_forSelect);
         EloquentBuilder::macro('page', $_page);
         EloquentBuilder::macro('getById', $_getById);
