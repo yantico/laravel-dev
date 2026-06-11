@@ -12,7 +12,12 @@ class DocBlockReader
     {
         $result = [];
         if (preg_match_all('/@(\w+)\s+([^\r\n]*)/m', $docblock, $matches)) {
-            $result = array_combine($matches[1], $matches[2]);
+            foreach ($matches[1] as $i => $key) {
+                $value = rtrim($matches[2][$i]);
+                // 移除注释结束符 */ 或行首 *
+                $value = preg_replace('/\s*\*\/$/', '', $value);
+                $result[$key] = trim($value);
+            }
         }
         return $result;
     }

@@ -67,12 +67,12 @@ class PlantUMLServices
      */
     private static function parseEntity(DBTableModel $table, string &$stringBuilder): void
     {
-        $name = $table->comment ?? $table->name;
+        $name = !empty($table->comment) ? $table->comment : $table->name;
         $stringBuilder .= "entity \"$name\" as $table->name {\n";
 
         # pk
         foreach ($table->columns as $column) {
-            if ($column->isPrimaryKey)
+            if ($column->isPrimaryKey || $column->name === 'id')
                 $stringBuilder .= "\t* $column->name <<PK>>\n";
         }
         $stringBuilder .= "\t--\n";
@@ -82,7 +82,8 @@ class PlantUMLServices
         foreach ($table->columns as $column) {
             if ($column->isForeignKey) {
                 $prefix = $column->nullable ? '-' : '+';
-                $stringBuilder .= "\t$prefix $column->name : $column->description <<FK>>\n";
+                $desc = !empty($column->description) ? " : $column->description" : "";
+                $stringBuilder .= "\t$prefix $column->name{$desc} <<FK>>\n";
                 $hasFk = true;
             }
         }
@@ -91,14 +92,14 @@ class PlantUMLServices
 
         # fields
         foreach ($table->columns as $column) {
-            if ($column->isPrimaryKey || $column->isForeignKey)
+            if ($column->isPrimaryKey || $column->name === 'id' || $column->isForeignKey)
                 continue;
-
-            if (!$column->description)
+            if (in_array($column->name, ['created_at', 'updated_at', 'deleted_at']))
                 continue;
 
             $prefix = $column->nullable ? '-' : '+';
-            $stringBuilder .= "\t$prefix $column->name : $column->description\n";
+            $desc = !empty($column->description) ? " : $column->description" : "";
+            $stringBuilder .= "\t$prefix $column->name{$desc}\n";
         }
 
         $stringBuilder .= "}\n\n";

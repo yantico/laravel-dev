@@ -74,6 +74,8 @@ class OpenApiServices
 //            $pathPrefix = implode('/', $router->moduleNames) . '/' . $router->name . '/';
             $tags = self::getTagByRouter($router);
             foreach ($router->actions as $action) {
+                if ($action->skipInRouter)
+                    continue;
                 $path = $router->routerPrefix . '/' . $action->uri;
                 $method = strtolower($action->methods[0]);
                 $data = [
