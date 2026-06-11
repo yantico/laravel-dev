@@ -23,7 +23,12 @@ class GenModelFilesCommand extends BaseCommand
     {
         list($name, $force) = $this->getNameAndForce();
 
-        $tableName = str()->of($name)->snake()->singular()->plural();
+        $snakeName = str()->of($name)->snake()->__toString();
+        // 如果传入的已经是有效的表名（直接存在于数据库中），则跳过复数化转换
+        $existingTable = DBServices::GetTableIfExists($snakeName);
+        $tableName = $existingTable
+            ? $existingTable->name
+            : str()->of($name)->snake()->singular()->plural()->__toString();
         $table = DBServices::GetTable($tableName);
 
         $namespace = "App\\Models\\Base";

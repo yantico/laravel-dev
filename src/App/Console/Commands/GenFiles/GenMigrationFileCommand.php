@@ -2,9 +2,10 @@
 
 namespace LaravelDev\App\Console\Commands\GenFiles;
 
-
+use Illuminate\Support\Facades\File;
 use LaravelDev\App\Console\Commands\BaseCommand;
 use LaravelDev\App\Exceptions\Err;
+use LaravelDev\App\Services\DBServices;
 
 class GenMigrationFileCommand extends BaseCommand
 {
@@ -22,13 +23,26 @@ class GenMigrationFileCommand extends BaseCommand
     {
         list($name,) = $this->getNameAndForce();
 
-        $tableName = str()->of($name)->snake()->singular()->plural();
+        $snakeName = str()->of($name)->snake()->__toString();
+        $existingTable = DBServices::GetTableIfExists($snakeName);
+        $tableName = $existingTable
+            ? $existingTable->name
+            : str()->of($name)->snake()->singular()->plural()->__toString();
+        $table = DBServices::GetTable($tableName);
 
-        $this->call('make:migration', [
-            'name' => "create_{$tableName}_table",
-            '--create' => $tableName,
-            '--table' => $tableName,
-        ]);
+        $fileName = now()->format('Y_m_d_His') . "_create_{$tableName}_table.php";
+        $filePath = database_path('migrations') . DIRECTORY_SEPARATOR . $fileName;
+
+        $stubPath = implode(DIRECTORY_SEPARATOR, [__DIR__, 'stubs', 'migration.stub']);
+        $content = File::get($stubPath);
+        $content = str_replace(
+            ['{{ tableName }}', '{{ columns }}'],
+            [$tableName, $table->getMigrationColumns()],
+            $content,
+        );
+
+        File::put($filePath, $content);
+        $this->info($filePath . "\t文件生成成功");
 
         return self::SUCCESS;
     }

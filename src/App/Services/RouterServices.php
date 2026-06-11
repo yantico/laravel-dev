@@ -152,11 +152,11 @@ class RouterServices
                 $action->methods = ($actionDoc['methods'] ?? false) ? explode(',', $actionDoc['methods']) : ['POST'];
                 $action->withMiddlewares = ($actionDoc['withMiddlewares'] ?? false) ? explode(',', $actionDoc['withMiddlewares']) : null;
                 $action->withoutMiddlewares = ($actionDoc['withoutMiddlewares'] ?? false) ? explode(',', $actionDoc['withoutMiddlewares']) : null;
-                $action->skipInRouter = $actionDoc['skipInRouter'] ?? false;
+                $action->skipInRouter = filter_var($actionDoc['skipInRouter'] ?? false, FILTER_VALIDATE_BOOLEAN);
                 $action->requestBody = self::getRequestBody($methodRef);
                 $action->responseJson = $actionDoc['responseJson'] ?? null;
                 $action->responseBody = $actionDoc['responseBody'] ?? null;
-                $action->isDownload = str_contains($actionDoc['return'] ?? false, 'StreamedResponse');
+                $action->isDownload = str_contains($actionDoc['return'] ?? '', 'StreamedResponse');
 
                 $controllerModel->actions[] = $action;
             }

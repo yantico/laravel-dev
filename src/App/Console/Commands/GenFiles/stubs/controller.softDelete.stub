@@ -10,7 +10,7 @@ use Exception;
 /**
  * @intro {{ comment }}
  */
-class {{ modelName }}Controller extends BaseController
+class {{ modelName }}Controller extends \Illuminate\Routing\Controller
 {
     /**
      * @intro 列表

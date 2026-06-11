@@ -201,6 +201,71 @@ class DBTableModel
     }
 
     /**
+     * @return string
+     */
+    public function getMigrationColumns(): string
+    {
+        $typeMap = [
+            'tinyint' => 'unsignedTinyInteger',
+            'smallint' => 'unsignedSmallInteger',
+            'mediumint' => 'unsignedMediumInteger',
+            'int' => 'unsignedInteger',
+            'bigint' => 'unsignedBigInteger',
+            'varchar' => 'string',
+            'char' => 'char',
+            'text' => 'text',
+            'mediumtext' => 'mediumText',
+            'longtext' => 'longText',
+            'enum' => 'string',
+            'date' => 'date',
+            'datetime' => 'dateTime',
+            'decimal' => 'decimal',
+            'double' => 'double',
+            'float' => 'float',
+            'json' => 'json',
+            'timestamp' => 'timestamp',
+            'boolean' => 'boolean',
+            'integer' => 'integer',
+            'real' => 'float',
+            'numeric' => 'decimal',
+            'blob' => 'binary',
+        ];
+
+        $lines = [];
+        $timestampsAdded = false;
+        foreach ($this->columns as $column) {
+            if ($column->name === 'id' && $column->isPrimaryKey) {
+                $lines[] = "\$table->id();";
+                continue;
+            }
+            if (!$timestampsAdded && in_array($column->name, ['created_at', 'updated_at'])) {
+                $lines[] = "\$table->timestamps();";
+                $timestampsAdded = true;
+                continue;
+            }
+            if (in_array($column->name, ['created_at', 'updated_at'])) {
+                continue;
+            }
+            if ($column->name === 'deleted_at') {
+                continue;
+            }
+
+            $method = $typeMap[$column->typeName] ?? 'string';
+            if ($column->nullable) {
+                $lines[] = "\$table->{$method}('{$column->name}')->nullable();";
+            } else {
+                $lines[] = "\$table->{$method}('{$column->name}');";
+            }
+        }
+
+        if ($this->hasSoftDelete) {
+            $lines[] = "\$table->softDeletes();";
+        }
+
+        return implode("\n            ", $lines);
+    }
+
+    /**
      * @return array
      */
     public function getInserts(): array

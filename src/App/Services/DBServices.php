@@ -13,11 +13,14 @@ use LaravelDev\App\Models\Database\DBTableModel;
 class DBServices
 {
     const PROPERTY_TYPES = [
+        // MySQL
         'tinyint' => 'integer',
         'smallint' => 'integer',
+        'mediumint' => 'integer',
         'int' => 'integer',
         'bigint' => 'integer',
         'varchar' => 'string',
+        'char' => 'string',
         'text' => 'string',
         'mediumtext' => 'string',
         'longtext' => 'string',
@@ -26,16 +29,26 @@ class DBServices
         'datetime' => 'string',
         'decimal' => 'numeric',
         'double' => 'numeric',
+        'float' => 'numeric',
         'json' => 'array',
         'timestamp' => 'mixed',
+        'boolean' => 'boolean',
+        // SQLite
+        'integer' => 'integer',
+        'real' => 'numeric',
+        'numeric' => 'numeric',
+        'blob' => 'string',
     ];
 
     const VALIDATE_TYPES = [
+        // MySQL
         'tinyint' => 'integer',
         'smallint' => 'integer',
+        'mediumint' => 'integer',
         'int' => 'integer',
         'bigint' => 'integer',
         'varchar' => 'string',
+        'char' => 'string',
         'text' => 'string',
         'mediumtext' => 'string',
         'longtext' => 'string',
@@ -44,8 +57,15 @@ class DBServices
         'datetime' => 'date',
         'decimal' => 'numeric',
         'double' => 'numeric',
+        'float' => 'numeric',
         'json' => 'array',
         'timestamp' => 'mixed',
+        'boolean' => 'boolean',
+        // SQLite
+        'integer' => 'integer',
+        'real' => 'numeric',
+        'numeric' => 'numeric',
+        'blob' => 'string',
     ];
 
     /**
@@ -78,6 +98,19 @@ class DBServices
         $index = array_search($tableName, $dbModel->tableKeys);
         if ($index === false)
             ee("表不存在：$tableName");
+        return $dbModel->tables[$index];
+    }
+
+    /**
+     * @param string $tableName
+     * @return DBTableModel|null
+     */
+    public static function GetTableIfExists(string $tableName): ?DBTableModel
+    {
+        $dbModel = self::GetFromCache();
+        $index = array_search($tableName, $dbModel->tableKeys);
+        if ($index === false)
+            return null;
         return $dbModel->tables[$index];
     }
 
@@ -119,10 +152,12 @@ class DBServices
                 $dbTableColumnModel->default = $column['default'];
                 $dbTableColumnModel->description = $column['comment'];
                 $dbTableColumnModel->required = !$column['nullable'] && $column['default'] === null;
-                $dbTableColumnModel->isPrimaryKey = in_array($column['type_name'], ['tinyint', 'smallint', 'mediumint', 'int', 'bigint']) && $column['auto_increment'] == true;
+                $dbTableColumnModel->isPrimaryKey = ($column['auto_increment'] ?? false) == true
+                    || ($column['name'] === 'id' && in_array($column['type_name'], ['tinyint', 'smallint', 'mediumint', 'int', 'bigint', 'integer']));
                 $dbTableModel->columns[] = $dbTableColumnModel;
                 $dbTableModel->columnNames[] = $column['name'];
-                if (str_contains($column['comment'], '[hidden]'))
+                // 注意：SQLite 不支持列注释，以下基于 comment 的特性（[hidden]、[ref:]等）仅在 MySQL 下生效
+                if (str_contains($column['comment'] ?? '', '[hidden]'))
                     $dbTableModel->hiddenColumns[] = $column['name'];
                 if ($column['type'] === 'json')
                     $dbTableModel->jsonColumns[] = $column['name'];
@@ -131,9 +166,15 @@ class DBServices
 
                 // foreign key
                 list($foreignTable, $foreignKey) = self::parseColumnForeignInfo($column);
-                if ($foreignTable && in_array($foreignTable, $tableNames)) {
-                    $dbTableColumnModel->isForeignKey = true;
-                    $dbTableModel->foreignColumns[$column['name']] = [$foreignTable, $foreignKey];
+                if ($foreignTable) {
+                    // 尝试单数形式，再尝试复数形式（Laravel 默认表名为复数）
+                    if (!in_array($foreignTable, $tableNames)) {
+                        $foreignTable = str()->of($foreignTable)->plural()->__toString();
+                    }
+                    if (in_array($foreignTable, $tableNames)) {
+                        $dbTableColumnModel->isForeignKey = true;
+                        $dbTableModel->foreignColumns[$column['name']] = [$foreignTable, $foreignKey];
+                    }
                 }
             }
 
@@ -156,10 +197,10 @@ class DBServices
      */
     private static function parseColumnForeignInfo(array $column): array
     {
-        $comment = $column['comment'];
+        $comment = $column['comment'] ?? '';
         $name = $column['name'];
 
-        // foreign key 备注中有：ref[表名,字段名]
+        // foreign key 备注中有：ref[表名,字段名]（注意：SQLite 不支持列注释，此功能仅 MySQL 可用）
         if (str()->of($comment)->contains("[ref:")) {
             $t1 = str()->of($comment)->between("[ref:", "]")->explode(',');
             return [str()->of($t1[0])->snake()->toString(), $t1[1] ?? 'id'];

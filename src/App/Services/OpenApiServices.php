@@ -36,13 +36,16 @@ class OpenApiServices
             ],
             'tags' => self::getTags($routers),
             'paths' => self::getPaths($routers),
-            'x-database' => self::getDatabases($db),
-            'x-enum' => self::getEnums($enums),
-            'x-plantuml' => PlantUMLServices::GetErMapsForOpenApi()
-//            'x-plant-uml' => [
-//                'server' => config('project.plantUmlServer', 'https://www.plantuml.com/plantuml/svg/'),
-//                'items' => PlantUMLServices::GetErMapsForOpenApi(),
-//            ],
+            'components' => [
+                'schemas' => array_merge(
+                    self::getDatabases($db),
+                    self::getEnums($enums),
+                ),
+            ],
+            'map' => [
+                'server' => config('project.plantUmlServer', 'https://www.plantuml.com/plantuml/svg/'),
+                'items' => PlantUMLServices::GetErMapsForOpenApi(),
+            ],
         ];
     }
 
@@ -143,6 +146,7 @@ class OpenApiServices
                 continue;
             $schemas[$table->name] = [
                 "title" => $table->comment,
+                "x-type" => "database",
                 "properties" => self::getTableProperties($table)
             ];
         }
@@ -159,6 +163,7 @@ class OpenApiServices
         foreach ($enums as $enum) {
             $schemas[$enum->className] = [
                 "title" => $enum->intro,
+                "x-type" => "enum",
                 "field" => $enum->field,
                 "properties" => self::getEnumProperties($enum)
             ];

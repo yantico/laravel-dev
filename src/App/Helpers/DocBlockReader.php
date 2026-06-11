@@ -11,7 +11,7 @@ class DocBlockReader
     public static function parse(string $docblock): array
     {
         $result = [];
-        if (preg_match_all('/@(\w+)\s+(.*)\r?\n/m', $docblock, $matches)) {
+        if (preg_match_all('/@(\w+)\s+([^\r\n]*)/m', $docblock, $matches)) {
             $result = array_combine($matches[1], $matches[2]);
         }
         return $result;
