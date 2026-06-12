@@ -3,12 +3,13 @@
 namespace {{ namespace }};
 
 use App\Models\{{ modelName }};
+{{ baseControllerUse }}
 use Exception;
 
 /**
  * @intro {{ comment }}
  */
-class {{ modelName }}Controller extends \Illuminate\Routing\Controller
+class {{ modelName }}Controller extends {{ baseControllerClass }}
 {
     /**
      * @intro 列表

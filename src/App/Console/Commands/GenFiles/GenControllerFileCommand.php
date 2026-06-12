@@ -34,11 +34,23 @@ class GenControllerFileCommand extends BaseCommand
         $namespace = "App\\Modules\\" . $modulesName->implode('\\');
         $className = $table->modelName . 'Controller';
 
+        // 自动检测模块下是否存在 BaseController，存在则继承它，否则继承默认 Controller
+        $baseControllerUse = '';
+        $baseControllerClass = '\\App\\Http\\Controllers\\Controller';
+        $moduleRootNamespace = "App\\Modules\\" . $modulesName->first();
+        $baseControllerFQCN = $moduleRootNamespace . '\\BaseController';
+        if (class_exists($baseControllerFQCN)) {
+            $baseControllerUse = "use {$baseControllerFQCN};";
+            $baseControllerClass = 'BaseController';
+        }
+
         $replaces = [
             '{{ namespace }}' => $namespace,
             '{{ modelName }}' => $table->modelName,
             '{{ comment }}' => $table->comment,
             '{{ validateString }}' => implode("\n\t\t\t", $table->getValidates()),
+            '{{ baseControllerUse }}' => $baseControllerUse,
+            '{{ baseControllerClass }}' => $baseControllerClass,
         ];
         $this->GenFile($table->hasSoftDelete ? 'controller.softDelete.stub' : 'controller.stub', $replaces, $namespace, $className, $force);
         return self::SUCCESS;
