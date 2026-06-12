@@ -119,27 +119,37 @@ class UserController extends Controller
 
 ## 激活路由发现
 
-在你的 `AppServiceProvider::boot()` 中调用：
+在 `routes/api.php` 中调用（推荐）：
 
 ```php
+<?php
+// routes/api.php
+use LaravelDev\App\Exceptions\Err;
 use LaravelDev\App\Services\RouterServices;
 
-public function boot(): void
-{
+try {
     RouterServices::Register();
+} catch (Err|ReflectionException $e) {
+    logger()->error($e->getMessage());
 }
 ```
 
+> 也可以放在 `AppServiceProvider::boot()` 中调用，效果相同。
+
 ## 中间件配置
 
-你需要在 `bootstrap/app.php` 中为模块配置中间件组：
+你需要在 `bootstrap/app.php` 中为模块配置中间件组。`appendToGroup` 的第一个参数必须与 `App\Modules/` 下的目录名一致：
 
 ```php
 ->withMiddleware(function (Middleware $middleware) {
-    $middleware->appendToGroup('admin', [
-        \LaravelDev\App\Middlewares\JsonWrapperMiddleware::class,
-        // 'auth:admin',  // 根据需要添加认证中间件
+    // 中间件别名
+    $middleware->alias([
+        'JsonWrapper' => \LaravelDev\App\Middlewares\JsonWrapperMiddleware::class,
     ]);
+
+    // 按模块配置中间件组
+    $middleware->appendToGroup('Admin', ['auth:Admin', 'JsonWrapper']);
+    $middleware->appendToGroup('Employee', ['auth:Employee', 'JsonWrapper']);
 })
 ```
 

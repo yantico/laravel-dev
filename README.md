@@ -78,7 +78,20 @@ public/docs/            ← API 在线文档前端页面
 
 假设你已经有一个正在运行的 Laravel 项目，并且数据库中有一张 `users` 表。
 
-### 第 1 步：配置 `config/project.php`
+### 第 1 步：编辑项目基础文件
+
+安装后需要编辑 6 个基础文件（新建 1 个 + 编辑 5 个），详见 [项目基本配置 →](docs/setup.md)：
+
+| 文件 | 说明 |
+|------|------|
+| `app/Models/Base/Base.php` | **新建** — Model 全局基类，引入 ModelTrait |
+| `app/Http/Controllers/Controller.php` | 编辑 — 引入 ControllerTrait |
+| `bootstrap/app.php` | 编辑 — 中间件组 + 异常处理（**最关键**） |
+| `routes/api.php` | 编辑 — 调用 RouterServices::Register() |
+| `tests/TestCase.php` | 编辑 — 引入 TestCaseTrait |
+| `.env` | 编辑 — 时区、语言、日志、数据库 |
+
+### 第 2 步：配置 `config/project.php`
 
 发布后编辑配置文件，按需调整（大部分保持默认即可）：
 
@@ -89,7 +102,7 @@ return [
 ];
 ```
 
-### 第 2 步：构建缓存
+### 第 3 步：构建缓存
 
 工具包通过反射数据库和代码来工作，首次使用前需要构建缓存：
 
@@ -97,7 +110,7 @@ return [
 php artisan cdb    # 缓存数据库表结构（本地环境会自动刷新，无需重复执行）
 ```
 
-### 第 3 步：生成代码
+### 第 4 步：生成代码
 
 ```bash
 # 为 users 表生成 Model（Base + 可编辑类）
@@ -109,21 +122,6 @@ php artisan gc Admin/Users
 # 生成 Enum（如 users 表有个 type 字段）
 php artisan ge users/type
 ```
-
-### 第 4 步：注册路由
-
-在你的 `AppServiceProvider::boot()` 或专门的服务提供者中调用：
-
-```php
-use LaravelDev\App\Services\RouterServices;
-
-public function boot(): void
-{
-    RouterServices::Register();
-}
-```
-
-所有放在 `App\Modules\` 下的 Controller 会自动注册为 API 路由。
 
 ### 第 5 步：查看 API 文档
 
@@ -194,19 +192,22 @@ return [
 ];
 ```
 
+> 各配置项的详细说明见 [项目基本配置](docs/setup.md)。
+
 ---
 
 ## 详细文档
 
 | 文档 | 说明 |
 |------|------|
+| [项目基本配置](docs/setup.md) | 安装后必做的 6 个基础文件配置（**入门必读**） |
 | [Artisan 命令大全](docs/commands.md) | 缓存、代码生成、调试、工具命令 |
 | [路由自动发现](docs/routing.md) | 目录约定、Controller 继承链、路由注册规则 |
 | [Model 生成](docs/model.md) | 三层继承模式（Base → BaseModel → Model） |
 | [代码生成](docs/code-generation.md) | Controller、Enum、Migration、Test 生成 |
 | [Builder 宏方法](docs/builder-macros.md) | 条件查询、分页、排序等 13 个宏 |
 | [Traits 工具集](docs/traits.md) | ControllerTrait、EnumTrait、ModelTrait、TestCaseTrait |
-| [中间件](docs/middleware.md) | JsonWrapperMiddleware、CheckPermissionMiddleware |
+| [中间件](docs/middleware.md) | JsonWrapperMiddleware、CheckPermissionMiddleware、完整中间件组配置 |
 | [辅助工具类](docs/helpers.md) | SchemaHelper、FastExcelHelper、AwsS3Helper 等 |
 | [异常处理](docs/exceptions.md) | ee() 全局函数、ExceptionRender 统一渲染 |
 | [API 在线文档](docs/api-docs.md) | OpenAPI 文档配置和使用 |
